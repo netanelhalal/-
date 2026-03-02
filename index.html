@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>פורים LIVE</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:#0c0715;
+  color:white;
+  text-align:center;
+}
+
+h1{
+  color:gold;
+  margin-top:30px;
+}
+
+.container{
+  max-width:600px;
+  margin:40px auto;
+  padding:20px;
+  background:#151028;
+  border-radius:20px;
+  box-shadow:0 0 20px rgba(255,215,0,0.2);
+}
+
+input{
+  padding:10px;
+  border-radius:10px;
+  border:none;
+  width:80%;
+  margin-bottom:15px;
+  font-size:16px;
+}
+
+button{
+  padding:12px 25px;
+  border:none;
+  border-radius:50px;
+  background:gold;
+  font-weight:bold;
+  cursor:pointer;
+  font-size:16px;
+}
+
+button:hover{
+  background:#ffcc00;
+}
+
+.score{
+  font-size:28px;
+  margin:20px 0;
+  color:#00ffc8;
+}
+
+.leaderboard{
+  margin-top:30px;
+  text-align:right;
+}
+
+.lb-item{
+  padding:8px;
+  border-bottom:1px solid rgba(255,255,255,0.1);
+}
+</style>
+</head>
+<body>
+
+<h1>🎭 קרנבל פורים LIVE 🎭</h1>
+
+<div class="container">
+
+  <input type="text" id="playerName" placeholder="הכנס שם שחקן">
+
+  <div class="score" id="score">0</div>
+
+  <button onclick="addPoints()">הוסף 10 נקודות</button>
+  <br><br>
+  <button onclick="saveScore()">שמור ניקוד בענן</button>
+
+  <div class="leaderboard">
+    <h3>🏆 לוח מובילים</h3>
+    <div id="leaderboardList"></div>
+  </div>
+
+</div>
+
+<script type="module">
+
+// 🔥 Firebase
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { 
+  getFirestore, 
+  collection, 
+  addDoc, 
+  query, 
+  orderBy, 
+  limit, 
+  onSnapshot 
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// 🔴 תדביק כאן את הנתונים שלך מ-Firebase
+const firebaseConfig = {
+  apiKey: "PASTE_HERE",
+  authDomain: "PASTE_HERE",
+  projectId: "PASTE_HERE",
+  storageBucket: "PASTE_HERE",
+  messagingSenderId: "PASTE_HERE",
+  appId: "PASTE_HERE"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+let score = 0;
+
+window.addPoints = function(){
+  score += 10;
+  document.getElementById("score").innerText = score;
+}
+
+window.saveScore = async function(){
+  const name = document.getElementById("playerName").value;
+
+  if(!name){
+    alert("הכנס שם קודם");
+    return;
+  }
+
+  await addDoc(collection(db, "leaderboard"), {
+    name: name,
+    score: score,
+    createdAt: Date.now()
+  });
+
+  alert("נשמר בהצלחה 🎉");
+}
+
+// 🔥 לייב טבלת מובילים
+const q = query(collection(db, "leaderboard"), orderBy("score","desc"), limit(10));
+
+onSnapshot(q, (snapshot) => {
+  const list = document.getElementById("leaderboardList");
+  list.innerHTML = "";
+
+  let rank = 1;
+
+  snapshot.forEach(doc => {
+    const data = doc.data();
+
+    const div = document.createElement("div");
+    div.className = "lb-item";
+    div.innerText = rank + ". " + data.name + " - " + data.score + " נק'";
+    list.appendChild(div);
+
+    rank++;
+  });
+});
+
+</script>
+
+</body>
+</html>
